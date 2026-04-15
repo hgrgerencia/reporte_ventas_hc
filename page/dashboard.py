@@ -5,6 +5,13 @@ import io
 from datetime import date, datetime
 from configuracion.leer_data_gs import leer_hoja_google
 
+
+def format_latino(val):
+    """Convierte un número al formato: $ 1.234,56"""
+    try:
+        return f"$ {val:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
+    except:
+        return "$ 0,00"
 def vista_dashboard():
     # --- ESTILOS PERSONALIZADOS ---
     st.markdown("""
@@ -76,54 +83,93 @@ def vista_dashboard():
             st.error(f"Error al procesar datos: {e}")
             return pd.DataFrame()
 
-    df_helados, df_chocolates = load_coordinator_data()
+    df_h, df_c = load_coordinator_data()
 
-    # --- CUERPO PRINCIPAL ---
-    st.markdown("<h2 style='text-align: center; color: #1F2937;'>Resumen de ventas 2026</h2>", unsafe_allow_html=True)
-    
-    # TOTAL VENTAS DE HELADOS VS TOTAL VENTAS DE CHOCOLATE
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown("<h3 style='text-align: center; color: #1F2937;'>Total Ventas Helados</h3>", unsafe_allow_html=True)
-        st.markdown(f"<h4 style='text-align: center; color: #1F2937;'>${df_helados['VENTA'].sum():,.2f}</h4>", unsafe_allow_html=True)
-    with col2:
-        st.markdown("<h3 style='text-align: center; color: #1F2937;'>Total Ventas Chocolates</h3>", unsafe_allow_html=True)
-        st.markdown(f"<h4 style='text-align: center; color: #1F2937;'>${df_chocolates['VENTA'].sum():,.2f}</h4>", unsafe_allow_html=True)
-    
-    # TOTAL CLIENTES DE HELADOS VS TOTAL CLIENTES DE CHOCOLATE
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown("<h3 style='text-align: center; color: #1F2937;'>Total Clientes Helados</h3>", unsafe_allow_html=True)
-        st.markdown(f"<h4 style='text-align: center; color: #1F2937;'>{df_helados['CLIENTES'].sum():,.2f}</h4>", unsafe_allow_html=True)
-    with col2:
-        st.markdown("<h3 style='text-align: center; color: #1F2937;'>Total Clientes Chocolates</h3>", unsafe_allow_html=True)
-        st.markdown(f"<h4 style='text-align: center; color: #1F2937;'>{df_chocolates['CLIENTES'].sum():,.2f}</h4>", unsafe_allow_html=True)
+    if df_h.empty and df_c.empty:
+        st.warning("No se pudieron cargar los datos.")
+        return
+
+    # --- FILTROS GLOBALES ---
+    with st.expander("🔍 Filtros de Fecha y Coordinación", expanded=True):
+        col1, col2 = st.columns(2)
+        with col1:
+            # Rango de fechas basado en helados (usualmente el más completo)
+            min_d, max_d = df_h['FECHA'].min().date(), df_h['FECHA'].max().date()
+            rango = st.date_input("Periodo de Análisis", [min_d, max_d])
+        with col2:
+            todos_coords = sorted(list(set(df_h['COORDINADOR'].unique()) | set(df_c['COORDINADOR'].unique())))
+            coords_sel = st.multiselect("Filtrar por Coordinador", todos_coords, default=todos_coords)
+
+    # Filtrado dinámico
+    def filtrar(df):
+        if len(rango) == 2:
+            mask = (df['FECHA'].dt.date >= rango[0]) & (df['FECHA'].dt.date <= rango[1]) & (df['COORDINADOR'].isin(coords_sel))
+            return df.loc[mask]
+        return df[df['COORDINADOR'].isin(coords_sel)]
+
+    f_h = filtrar(df_h)
+    f_c = filtrar(df_c)
+
+    # --- PESTAÑAS ---
+    t1, t2, t3 = st.tabs(["🍦 Helados", "🍫 Chocolates", "📈 Consolidado"])
+
+    def render_metrics(df_f, color_scale):
+        if 'MES_AÑO' not in df_f.columns and not df_f.empty:
+            df_f['MES_AÑO'] = df_f['FECHA'].dt.to_period('M').astype(str)
         
-    # TOTAL VENTAS MES ACTUAL
-    # FILTRAR POR MES ACTUAL
-    current_month = datetime.now().month
-    current_year = datetime.now().year
-    df_helados_MES_ACTUAL = df_helados[df_helados['FECHA'] == current_month]
-    df_chocolates_MES_ACTUAL = df_chocolates[df_chocolates['FECHA'] == current_month]
-    # MES HELADO VS MES CHOCOLATE
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown(f"<h3 style='text-align: center; color: #1F2937;'>Total Ventas Mes Actual {current_month} Helados</h3>", unsafe_allow_html=True)
-        st.markdown(f"<h4 style='text-align: center; color: #1F2937;'>${df_helados_MES_ACTUAL['VENTA'].sum():,.2f}</h4>", unsafe_allow_html=True)
-    with col2:
-        st.markdown("<h3 style='text-align: center; color: #1F2937;'>Total Ventas Mes Actual Chocolates</h3>", unsafe_allow_html=True)
-        st.markdown(f"<h4 style='text-align: center; color: #1F2937;'>${df_chocolates_MES_ACTUAL['VENTA'].sum():,.2f}</h4>", unsafe_allow_html=True)
+        total_v = df_f['VENTA'].sum()
+        total_cl = df_f['CLIENTES'].sum()
         
-    # TOTAL CLIENTES MES ACTUAL
-    # MES HELADO VS MES CHOCOLATE
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown("<h3 style='text-align: center; color: #1F2937;'>Total Clientes Mes Actual Helados</h3>", unsafe_allow_html=True)
-        st.markdown(f"<h4 style='text-align: center; color: #1F2937;'>{df_helados_MES_ACTUAL['CLIENTES'].sum():,.2f}</h4>", unsafe_allow_html=True)
-    with col2:
-        st.markdown("<h3 style='text-align: center; color: #1F2937;'>Total Clientes Mes Actual Chocolates</h3>", unsafe_allow_html=True)
-        st.markdown(f"<h4 style='text-align: center; color: #1F2937;'>{df_chocolates_MES_ACTUAL['CLIENTES'].sum():,.2f}</h4>", unsafe_allow_html=True)
-    
+        m1, m2, m3 = st.columns(3)
+        m1.markdown(f'<div class="metric-card"><p>Venta Total</p><h3>{format_latino(total_v)}</h3></div>', unsafe_allow_html=True)
+        m2.markdown(f'<div class="metric-card"><p>Clientes Atendidos</p><h3>{total_cl:,.0f}</h3></div>', unsafe_allow_html=True)
+        m3.markdown(f'<div class="metric-card"><p>Ticket Promedio</p><h3>{format_latino(total_v/total_cl if total_cl > 0 else 0)}</h3></div>', unsafe_allow_html=True)
+
+        st.write("### Evolución Mensual Acumulada")
+        mensual = df_f.groupby('MES_AÑO')['VENTA'].sum().reset_index()
+        fig_mes = px.line(mensual, x='MES_AÑO', y='VENTA', markers=True, text=[format_latino(x) for x in mensual['VENTA']])
+        st.plotly_chart(fig_mes, use_container_width=True)
+
+        col_a, col_b = st.columns(2)
+        with col_a:
+            st.write("### Por Coordinador")
+            por_coord = df_f.groupby('COORDINADOR')['VENTA'].sum().reset_index().sort_values('VENTA')
+            st.plotly_chart(px.bar(por_coord, y='COORDINADOR', x='VENTA', orientation='h', color='VENTA', color_continuous_scale=color_scale), use_container_width=True)
+        
+        with col_b:
+            st.write("### Top 10 Distribuidoras")
+            top_dist = df_f.groupby('DISTRIBUIDORA')['VENTA'].sum().reset_index().sort_values('VENTA', ascending=False).head(10)
+            st.plotly_chart(px.pie(top_dist, values='VENTA', names='DISTRIBUIDORA', hole=0.4), use_container_width=True)
+
+        st.write("### Detalle Acumulado por Distribuidor")
+        tabla = df_f.groupby(['COORDINADOR', 'DISTRIBUIDORA']).agg({'VENTA': 'sum', 'CLIENTES': 'sum'}).reset_index()
+        st.dataframe(tabla.style.format({'VENTA': '{:,.2f}', 'CLIENTES': '{:,.0f}'}), width='stretch')
+
+    with t1:
+        render_metrics(f_h, "Blues")
+
+    with t2:
+        render_metrics(f_c, "Reds")
+
+    with t3:
+        # Consolidación de ambos DataFrames
+        total_v_h = f_h['VENTA'].sum()
+        total_v_c = f_c['VENTA'].sum()
+        
+        c1, c2 = st.columns(2)
+        fig_pie = px.pie(values=[total_v_h, total_v_c], names=['Helados', 'Chocolates'], title="Distribución de Ingresos")
+        c1.plotly_chart(fig_pie, use_container_width=True)
+        
+        # Tabla comparativa por mes
+        h_mes = f_h.groupby('MES_AÑO')['VENTA'].sum().rename('Venta Helados')
+        c_mes = f_c.groupby('MES_AÑO')['VENTA'].sum().rename('Venta Chocolates')
+        comparativo = pd.concat([h_mes, c_mes], axis=1).fillna(0)
+        comparativo['Total'] = comparativo.sum(axis=1)
+        
+        st.write("### Comparativo Mensual Consolidado")
+        st.dataframe(comparativo.style.format('{:,.2f}'), width='stretch', column_config={
+            "MES_AÑO": "Periodo", 
+        })
 
 
     

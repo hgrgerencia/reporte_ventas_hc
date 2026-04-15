@@ -4,14 +4,8 @@ import plotly.express as px
 import io
 from datetime import date, datetime
 from configuracion.leer_data_gs import leer_hoja_google
+from util.formato_moneda import format_latino
 
-
-def format_latino(val):
-    """Convierte un número al formato: $ 1.234,56"""
-    try:
-        return f"$ {val:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
-    except:
-        return "$ 0,00"
 def vista_dashboard():
     # --- ESTILOS PERSONALIZADOS ---
     st.markdown("""

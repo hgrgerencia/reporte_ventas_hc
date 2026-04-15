@@ -1,5 +1,6 @@
 import streamlit as st
 from page.dashboard import vista_dashboard
+from page.sell_in import vista_sell_in
 from page.coordinadores import vista_corrdinadores
 from page.distribuidoras import vista_distribuidoras
 from page.coord_chocolates import vista_corrdinadores_chocolates
@@ -210,7 +211,7 @@ def show_dashboard():
     with st.sidebar:
         st.markdown("## 📊 PRO PANEL")
         st.write("---")
-        menu = st.radio("Helados", ["📊 Dashboard", "Coordinadores", "Distribuidoras", "Coord. Chocolates", "Dist. Chololates"])
+        menu = st.radio("Helados", ["📊 Dashboard", "📦 SELL IN", "Coordinadores", "Distribuidoras", "Coord. Chocolates", "Dist. Chololates"])
 
         st.write("---")
         if st.button("Cerrar Sesión", use_container_width=True):
@@ -231,6 +232,8 @@ def show_dashboard():
 
     if menu == "📊 Dashboard":
         vista_dashboard()
+    elif menu == "📦 SELL IN":
+        vista_sell_in()
     elif menu == "Coordinadores":
         vista_corrdinadores()
     elif menu == "Distribuidoras":

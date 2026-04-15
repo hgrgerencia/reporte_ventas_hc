@@ -45,22 +45,13 @@ def vista_corrdinadores_chocolates():
             # --- LIMPIEZA DE DATOS NUMÉRICOS (Manejo de comas) ---
             # Si el punto no existe y la coma es el decimal, convertimos a formato Python
             if 'VENTA' in df_ventas.columns:
-                # df_ventas['VENTA'] = (
-                #     df_ventas['VENTA']
-                #     .astype(str)
-                #     .str.replace(',', '.', regex=False)
-                #     .str.strip()
-                # )
                 df_ventas['VENTA'] = pd.to_numeric(df_ventas['VENTA'], errors='coerce').fillna(0)
                 
             if 'TICKET PROMEDIO' in df_ventas.columns:
-                # df_ventas['TICKET PROMEDIO'] = (
-                #     df_ventas['TICKET PROMEDIO']
-                #     .astype(str)
-                #     .str.replace(',', '.', regex=False)
-                #     .str.strip()
-                # )
                 df_ventas['TICKET PROMEDIO'] = pd.to_numeric(df_ventas['TICKET PROMEDIO'], errors='coerce').fillna(0)
+                
+            if 'Kilos Promedio' in df_ventas.columns:
+                df_ventas['Kilos Promedio'] = pd.to_numeric(df_ventas['Kilos Promedio'], errors='coerce').fillna(0)
                 
             if 'CLIENTES' in df_ventas.columns:
                 df_ventas['CLIENTES'] = pd.to_numeric(df_ventas['CLIENTES'], errors='coerce').fillna(0)
@@ -137,6 +128,8 @@ def vista_corrdinadores_chocolates():
             clientes_totales = df_filtered['CLIENTES'].sum()
             ticket_medio = ventas_totales / clientes_totales if clientes_totales > 0 else 0
             cant_coords = df_filtered['COORDINADOR'].nunique()
+            venta_kilos_promedio = df_filtered['Kilos Promedio'].sum()
+            
             
             # Formateo para visualización local
             def format_money(val):
@@ -149,7 +142,7 @@ def vista_corrdinadores_chocolates():
             with m3:
                 st.markdown(f'<div class="metric-card"><p>Ticket Promedio Global</p><h3>{format_money(ticket_medio)}</h3></div>', unsafe_allow_html=True)
             with m4:
-                st.markdown(f'<div class="metric-card"><p>Coordinadores Activos</p><h3>{cant_coords:,.0f}</h3></div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="metric-card"><p>Total Kg</p><h3>{venta_kilos_promedio:,.2f}</h3></div>', unsafe_allow_html=True)
 
             st.write("##")
 

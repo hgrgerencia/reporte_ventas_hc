@@ -45,21 +45,12 @@ def vista_corrdinadores():
             # --- LIMPIEZA DE DATOS NUMÉRICOS (Manejo de comas) ---
             # Si el punto no existe y la coma es el decimal, convertimos a formato Python
             if 'VENTA' in df_ventas.columns:
-                # df_ventas['VENTA'] = (
-                #     df_ventas['VENTA']
-                #     .astype(str)
-                #     .str.replace(',', '.', regex=False)
-                #     .str.strip()
-                # )
                 df_ventas['VENTA'] = pd.to_numeric(df_ventas['VENTA'], errors='coerce').fillna(0)
+            
+            if 'Litros Promedio' in df_ventas.columns:
+                df_ventas['Litros Promedio'] = pd.to_numeric(df_ventas['Litros Promedio'], errors='coerce').fillna(0)
                 
             if 'TICKET PROMEDIO' in df_ventas.columns:
-                # df_ventas['TICKET PROMEDIO'] = (
-                #     df_ventas['TICKET PROMEDIO']
-                #     .astype(str)
-                #     .str.replace(',', '.', regex=False)
-                #     .str.strip()
-                # )
                 df_ventas['TICKET PROMEDIO'] = pd.to_numeric(df_ventas['TICKET PROMEDIO'], errors='coerce').fillna(0)
                 
             if 'CLIENTES' in df_ventas.columns:
@@ -137,6 +128,7 @@ def vista_corrdinadores():
             clientes_totales = df_filtered['CLIENTES'].sum()
             ticket_medio = ventas_totales / clientes_totales if clientes_totales > 0 else 0
             cant_coords = df_filtered['COORDINADOR'].nunique()
+            venta_litros_promedio = df_filtered['Litros Promedio'].sum()
             
             # Formateo para visualización local
             def format_money(val):
@@ -145,11 +137,11 @@ def vista_corrdinadores():
             with m1:
                 st.markdown(f'<div class="metric-card"><p>Venta Consolidada</p><h3>{format_money(ventas_totales)}</h3></div>', unsafe_allow_html=True)
             with m2:
-                st.markdown(f'<div class="metric-card"><p>Cobertura Clientes</p><h3>{clientes_totales}</h3></div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="metric-card"><p>Cobertura Clientes</p><h3>{clientes_totales:,.0f}</h3></div>', unsafe_allow_html=True)
             with m3:
                 st.markdown(f'<div class="metric-card"><p>Ticket Promedio Global</p><h3>{format_money(ticket_medio)}</h3></div>', unsafe_allow_html=True)
             with m4:
-                st.markdown(f'<div class="metric-card"><p>Coordinadores Activos</p><h3>{cant_coords}</h3></div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="metric-card"><p>Total Litros</p><h3>{venta_litros_promedio:,.2f}</h3></div>', unsafe_allow_html=True)
 
             st.write("##")
 
@@ -184,6 +176,7 @@ def vista_corrdinadores():
                     tabla_c = df_c.groupby('DISTRIBUIDORA').agg({
                         'VENTA': 'sum',
                         'CLIENTES': 'sum',
+                        'Litros Promedio':'sum',
                         'TICKET PROMEDIO': 'mean'
                     }).reset_index().sort_values('VENTA', ascending=False)
                     
@@ -197,6 +190,7 @@ def vista_corrdinadores():
                     st.dataframe(tabla_c, 
                         column_config={
                             "VENTA": st.column_config.NumberColumn(format="dollar"),
+                            "Litros Promedio":"LITROS",
                             "TICKET PROMEDIO": st.column_config.NumberColumn(format="dollar")
                         },
                         width="stretch", hide_index=True
@@ -210,6 +204,7 @@ def vista_corrdinadores():
                 reporte_final = df.groupby(['COORDINADOR', 'DISTRIBUIDORA']).agg({
                     'VENTA': 'sum',
                     'CLIENTES': 'sum',
+                    'Litros Promedio':'sum',
                     'TICKET PROMEDIO': 'mean'
                 }).reset_index()
                 

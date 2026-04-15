@@ -105,6 +105,7 @@ def vista_dashboard():
     f_c = filtrar(df_c)
 
     # --- PESTAÑAS ---
+    st.write("### Sell Out")
     t1, t2, t3 = st.tabs(["🍦 Helados", "🍫 Chocolates", "📈 Consolidado"])
 
     def render_metrics(df_f, color_scale):

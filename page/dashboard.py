@@ -133,8 +133,21 @@ def vista_dashboard():
         
         with col_b:
             st.write("### Top 10 Distribuidoras")
-            top_dist = df_f.groupby('DISTRIBUIDORA')['VENTA'].sum().reset_index().sort_values('VENTA', ascending=False).head(10)
-            st.plotly_chart(px.pie(top_dist, values='VENTA', names='DISTRIBUIDORA', hole=0.4), use_container_width=True)
+            top_dist = df_f.groupby('DISTRIBUIDORA')['VENTA'].sum().reset_index().sort_values('VENTA', ascending=False)
+            # 1. Calculas el top 10
+            top_10 = top_dist.head(10).copy()
+
+            # 2. Calculas la suma de todo lo que NO es el top 10
+            otros_valor = top_dist.iloc[10:]['VENTA'].sum()
+
+            # 3. Creas una fila para "Otros"
+            fila_otros = pd.DataFrame({'DISTRIBUIDORA': ['Otros'], 'VENTA': [otros_valor]})
+
+            # 4. Concatenas
+            df_para_grafico = pd.concat([top_10, fila_otros], ignore_index=True)
+
+            # 5. Graficas (ahora el 100% será el total real)
+            st.plotly_chart(px.pie(df_para_grafico, values='VENTA', names='DISTRIBUIDORA', hole=0.4))
 
         st.write("### Detalle Acumulado por Distribuidor")
         tabla = df_f.groupby(['COORDINADOR', 'DISTRIBUIDORA']).agg({'VENTA': 'sum', 'CLIENTES': 'sum'}).reset_index()

@@ -109,7 +109,7 @@ def vista_sell_in():
     # --- PESTAÑAS ---
     t1, t2, t3 = st.tabs(["🍦 Helados (Litros)", "🍫 Chocolates (KG)", "📈 Consolidado Maras"])
 
-    def render_sellin_tab(df_a, df_r, col_vol, unit, color):
+    def render_sellin_tab(df_a, df_r, col_vol, unit, color, key_tab):
         m1, m2, m3 = st.columns(3)
         with m1:
             st.markdown(f'<div class="metric-card"><p>Acumulado Maras</p><h3>{format_latino(df_a["MARAS"].sum())}</h3></div>', unsafe_allow_html=True)
@@ -125,12 +125,13 @@ def vista_sell_in():
         with c_left:
             st.subheader(f"Maras por Coordinador ({unit})")
             res_c = df_r.groupby('COORDINADOR')['MARAS'].sum().reset_index().sort_values('MARAS')
-            st.plotly_chart(px.bar(res_c, y='COORDINADOR', x='MARAS', orientation='h', color='MARAS', color_continuous_scale=color), use_container_width=True)
+            st.plotly_chart(px.bar(res_c, y='COORDINADOR', x='MARAS', orientation='h', color='MARAS', color_continuous_scale=color), use_container_width=True,
+            key=f"bar_chart_{key_tab}")
         
         with c_right:
             st.subheader("Evolución de Maras por Mes")
             res_m = df_r.groupby('MES_AÑO')['MARAS'].sum().reset_index()
-            st.plotly_chart(px.line(res_m, x='MES_AÑO', y='MARAS', markers=True), use_container_width=True)
+            st.plotly_chart(px.line(res_m, x='MES_AÑO', y='MARAS', markers=True), use_container_width=True, key=f"line_chart_{key_tab}")
 
         st.subheader("Detalle por Distribuidor")
         tabla = df_r.groupby(['COORDINADOR', 'DISTRIBUIDORA']).agg({'MARAS': 'sum', col_vol: 'sum'}).reset_index()
@@ -147,10 +148,10 @@ def vista_sell_in():
         )
 
     with t1:
-        render_sellin_tab(h_acum, h_range, 'LITROS', 'Litros', 'Blues')
+        render_sellin_tab(h_acum, h_range, 'LITROS', 'Litros', 'Blues', 'helados')
 
     with t2:
-        render_sellin_tab(c_acum, c_range, 'KG', 'KG', 'Reds')
+        render_sellin_tab(c_acum, c_range, 'KG', 'KG', 'Reds', 'chocolates')
 
     with t3:
         st.subheader("Distribución Consolidada de Maras")

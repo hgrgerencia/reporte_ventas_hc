@@ -143,7 +143,7 @@ def vista_distribuidoras():
             with m1:
                 st.markdown(f'<div class="metric-card"><p>Ventas Totales</p><h3>${total_venta:,.2f}</h3></div>', unsafe_allow_html=True)
             with m2:
-                st.markdown(f'<div class="metric-card"><p>Total Clientes</p><h3>{total_clientes:,.0f}</h3></div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="metric-card"><p>Total Transacciones</p><h3>{total_clientes:,.0f}</h3></div>', unsafe_allow_html=True)
             with m3:
                 st.markdown(f'<div class="metric-card"><p>Ticket Promedio</p><h3>${ticket_avg:,.2f}</h3></div>', unsafe_allow_html=True)
             with m4:
